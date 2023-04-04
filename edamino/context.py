@@ -334,3 +334,12 @@ class Context:
     
     async def comment_profile(self, userId: str, message: str):
         return await self.client.comment_profile(self.msg.uid if userId is None else userId, message)
+    
+    async def get_wallet_info(self):
+        return await self.client.get_wallet_info()
+    
+    async def invite_to_vc(self, chat_id: str = None, userId: str = None):
+        return await self.client.invite_to_vc(self.msg.threadId if chat_id is None else chat_id, self.msg.uid if userId is None else userId)
+
+    async def apply_avatar_frame(self, avatarId: str, applyToAll: bool = True):
+        return await self.client.apply_avatar_frame(avatarId, applyToAll)

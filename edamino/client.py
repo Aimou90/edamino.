@@ -193,6 +193,27 @@ class Client:
         )
         return data['noticeList']
 
+    async def invite_to_vc(self, chatId: str,  userId: str) -> Dict:
+        data = {
+            "uid": userId
+        }
+        return await self.request(
+            'POST',
+            f'chat/thread/{chatId}/vvchat-presenter/invite/', json= data
+        )
+
+    async def apply_avatar_frame(self, avatarId: str, applyToAll: bool = True) -> Dict:
+        data = {"frameId": avatarId,
+                "applyToAll": 0,
+                "timestamp": int(time() * 1000)
+                }
+
+        if applyToAll: data["applyToAll"] = 1
+        return await self.request(
+            'POST',
+            f'avatar-frame/apply', json= data
+        )
+
     async def join_community(self,
                              invitation_code: Optional[str] = None) -> Dict:
         data = {}
