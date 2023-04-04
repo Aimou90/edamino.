@@ -77,7 +77,7 @@ class Context:
         return await self.client.unfollow(self.msg.uid)
 
     async def delete_message(self, as_staff: bool = False, reason: Optional[str] = None):
-        return self.client.delete_message(chat_id=self.msg.threadId,
+        return await self.client.delete_message(chat_id=self.msg.threadId,
                                           message_id=self.msg.messageId,
                                           reason=reason,
                                           as_staff=as_staff)
