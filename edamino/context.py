@@ -38,7 +38,7 @@ class Context:
     async def send_image(self, image: bytes):
         return await self.client.send_image(image, chat_id=self.msg.threadId)
 
-    async def send_gif(self, gif: bytes):
+    async def send_gif(self, gif):
         return await self.client.send_gif(gif, chat_id=self.msg.threadId)
 
     async def send_audio(self, audio: bytes):
@@ -54,9 +54,10 @@ class Context:
                    mentions: Optional[List[str]] = None,
                    embed: Optional[Embed] = None,
                    link_snippets_list: Optional[List[LinkSnippet]] = None,
-                   reply: Optional[str] = None):
+                   reply: Optional[str] = None,
+                   chatid: Optional[str] = None):
         return await self.client.send_message(message=message,
-                                              chat_id=self.msg.threadId,
+                                              chat_id=self.msg.threadId if chatid is None else chatid,
                                               message_type=message_type,
                                               ref_id=ref_id,
                                               mentions=mentions,
@@ -64,8 +65,8 @@ class Context:
                                               link_snippets_list=link_snippets_list,
                                               reply=reply)
 
-    async def get_user_info(self):
-        return await self.client.get_user_info(self.msg.uid)
+    async def get_user_info(self, userId: str = None):
+        return await self.client.get_user_info(self.msg.uid if userId is None else userId)
 
     async def invite(self, chat_id: str):
         return await self.client.invite_to_chat(uids=[self.msg.uid], chat_id=chat_id)
@@ -91,11 +92,11 @@ class Context:
     async def leave_community(self):
         return await self.client.leave_community()
 
-    async def join_chat(self):
-        return await self.client.join_chat(self.msg.threadId)
+    async def join_chat(self, chatid: str = None):
+        return await self.client.join_chat(self.msg.threadId if chatid is None else chatid)
 
-    async def leave_chat(self):
-        return await self.client.leave_chat(self.msg.threadId)
+    async def leave_chat(self, chatid: str = None):
+        return await self.client.leave_chat(self.msg.threadId if chatid is None else chatid)
 
     async def get_info_link(self, link: str):
         return await self.client.get_info_link(link)
@@ -300,3 +301,36 @@ class Context:
 
     async def get_chats(self, start: int = 0, size: int = 25):
         return await self.client.get_chats(start, size)
+
+    async def get_chat_users(self, start: int = 0, size: int = 25):
+        return await self.client.get_chat_users(self.msg.threadId, start, size)
+    
+    async def subscribe(self):
+        return await self.client.subscribe(user_id = self.msg.author.uid, auto_renew = False)
+
+    async def get_public_chats(self, start: int = 0, size: int = 25):
+        return await self.client.get_public_chats(start, size)
+
+    async def block(self, userId: str):
+        return await self.client.block(self.msg.uid if userId is None else userId)
+    
+    async def unblock(self, userId: str):
+        return await self.client.unblock(self.msg.uid if userId is None else userId)
+    
+    async def get_notices(self, start: int = 0, size: int = 25):
+        return await self.client.get_notices(start, size)
+
+    async def promotion(self, noticeId: str, type: str = "accept"):
+        return await self.client.promotion(noticeId, type)
+    
+    async def set_bubble(self, chat_id: str = None, bubble_id: str = None, apply_to_all: bool = False):
+        return await self.client.set_bubble(self.msg.threadId if chat_id is None else chat_id, bubble_id, apply_to_all)
+
+    async def ban(self, userId: str, reason: str):
+        return await self.client.ban(self.msg.uid if userId is None else userId, reason)
+
+    async def unban(self, userId: str, reason: str):
+        return await self.client.unban(self.msg.uid if userId is None else userId, reason)
+    
+    async def comment_profile(self, userId: str, message: str):
+        return await self.client.comment_profile(self.msg.uid if userId is None else userId, message)

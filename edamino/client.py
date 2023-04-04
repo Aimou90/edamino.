@@ -145,7 +145,7 @@ class Client:
             start: int = 0,
             size: int = 25) -> Tuple[objects.Community, ...]:
         response = await self.request(
-            'GET', f'community/joined?v=1&start={start}&size={size}')
+            'GET', f'/g/s/community/joined?v=1&start={start}&size={size}')
         return tuple(
             map(lambda community: objects.Community(**community),
                 response['communityList']))
@@ -164,6 +164,34 @@ class Client:
             'GET',
             f'community/link-identify?q=http%3A%2F%2Faminoapps.com%2Finvite%2F{code}'
         )
+
+    async def block(self, userId: str) -> Dict:
+        data = {"timestamp": int(time() * 1000)}
+        return await self.request(
+            'POST',
+            f'block/{userId}', json=data
+        )
+
+    async def unblock(self, userId: str) -> Dict:
+        data = {"timestamp": int(time() * 1000)}
+        return await self.request(
+            'DELETE',
+            f'block/{userId}', json=data
+        )
+
+    async def promotion(self, noticeId: str, type: str = "accept") -> Dict:
+        data = {"timestamp": int(time() * 1000)}
+        return await self.request(
+            'POST',
+            f'notice/{noticeId}/{type}', json=data
+        )
+
+    async def get_notices(self, start: int = 0, size: int = 25) -> Dict:
+        data = await self.request(
+            'GET',
+            f'notice?type=usersV2&status=1&start={start}&size={size}'
+        )
+        return data['noticeList']
 
     async def join_community(self,
                              invitation_code: Optional[str] = None) -> Dict:
@@ -194,17 +222,20 @@ class Client:
 
         return f
 
-    async def send_image(self, image: bytes, chat_id: str) -> Dict:
+    async def send_image(self, image, chat_id: str) -> Dict:
+        media = await self.upload_media(image, "image/jpg")
         data = {
-            "content": None,
-            "mediaType": api.MediaType.GIF_AND_IMAGE,
-            "mediaUploadValueContentType": "image/jpg",
-            "mediaUhqEnabled": True,
-            "mediaUploadValue": b64encode(image).decode()
-        }
-        return await self.request("POST",
-                                  f"chat/thread/{chat_id}/message",
-                                  json=data)
+                "content": None,
+                "clientRefId": int(time() / 10 % 1000000000),
+                "timestamp": int(time() * 1000),
+                "mediaType": 100,
+                "sendFailed": False,
+                "type": 0,
+                "uploadId": 0,
+                "mediaValue": media
+                }
+        return await self.request("POST", f"chat/thread/{chat_id}/message", json=data)
+    
 
     async def send_audio(self, audio: bytes, chat_id: str) -> Dict:
         data = {
@@ -216,19 +247,21 @@ class Client:
         return await self.request("POST",
                                   f"chat/thread/{chat_id}/message",
                                   json=data)
-
-    async def send_gif(self, image: bytes, chat_id: str) -> Dict:
+    
+    async def send_gif(self, image, chat_id: str) -> Dict:
+        media = await self.upload_media(image, "image/gif")
         data = {
-            "content": None,
-            "mediaType": api.MediaType.GIF_AND_IMAGE,
-            "mediaUploadValueContentType": "image/gif",
-            "mediaUhqEnabled": True,
-            "mediaUploadValue": b64encode(image).decode()
-        }
-        return await self.request("POST",
-                                  f"chat/thread/{chat_id}/message",
-                                  json=data)
-
+                "content": None,
+                "clientRefId": int(time() / 10 % 1000000000),
+                "timestamp": int(time() * 1000),
+                "mediaType": 100,
+                "sendFailed": False,
+                "type": 0,
+                "uploadId": 0,
+                "mediaValue": media
+                }
+        return await self.request("POST", f"chat/thread/{chat_id}/message", json=data)
+    
     async def send_message(
         self,
         chat_id: str,
@@ -620,8 +653,11 @@ class Client:
         return objects.WalletInfo(**response['wallet'])
 
     async def join_chat(self, chat_id: str) -> Dict:
+        data = {
+            "timestamp": int(time() * 1000)
+            }
         return await self.request('POST',
-                                  f'chat/thread/{chat_id}/member/{self.uid}')
+                                  f'chat/thread/{chat_id}/member/{self.uid}', json=data)
 
     async def delete_message(self,
                              chat_id: str,
@@ -952,6 +988,14 @@ class Client:
             'GET', f"live-layer/public-chats?start={start}&size={size}")
         return tuple(map(lambda o: objects.Chat(**o), response["threadList"]))
 
+    async def get_all_public_chats(self,
+                                type: str = "recommended",
+                               start: int = 0,
+                               size: int = 25) -> Tuple[objects.Chat]:
+        response = await self.request(
+            'GET', f"chat/thread?type=public-all&filterType={type}&start={start}&size={size}")
+        return tuple(map(lambda o: objects.Chat(**o), response["threadList"]))
+
     async def get_user_wikis(self,
                              user_id: str,
                              start: int = 0,
@@ -961,6 +1005,7 @@ class Client:
             f"item?type=user-all&start={start}&size={size}&cv=1.2&uid={user_id}"
         )
         return tuple(map(lambda o: objects.Wiki(**o), response["itemList"]))
+
 
     async def ban(self,
                   user_id: str,
